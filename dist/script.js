@@ -4195,8 +4195,8 @@ __webpack_require__.r(__webpack_exports__);
 var checkTextInputs = function checkTextInputs(selector) {
   var txtInputs = document.querySelectorAll(selector);
   txtInputs.forEach(function (input) {
-    input.addEventListener('blur', function () {
-      if (input.value.match(/[^a-z]/ig)) {
+    input.addEventListener('input', function (e) {
+      if (input.value.match(/[a-zA-Z]/ig)) {
         input.value = '';
       }
     });
@@ -4402,8 +4402,8 @@ var mask = function mask(selector) {
     });
 
     if (event.type === 'blur') {
-      if (this.val.length == 2) {
-        this.val = '';
+      if (this.value.length == 2) {
+        this.value = '';
       }
     } else {
       setCursorPosition(this.value.length, this);

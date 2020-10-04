@@ -2,8 +2,8 @@ const checkTextInputs = (selector) => {
     const txtInputs = document.querySelectorAll(selector);
 
     txtInputs.forEach(input => {
-        input.addEventListener('blur', () => {
-            if (input.value.match(/[^a-z]/ig)) {
+        input.addEventListener('input', (e) => {
+            if (input.value.match(/[a-zA-Z]/ig)) {
                 input.value = '';
             }
         });
