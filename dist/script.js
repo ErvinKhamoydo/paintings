@@ -296,6 +296,36 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/internals/array-method-has-species-support.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/core-js/internals/array-method-has-species-support.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+var V8_VERSION = __webpack_require__(/*! ../internals/v8-version */ "./node_modules/core-js/internals/v8-version.js");
+
+var SPECIES = wellKnownSymbol('species');
+
+module.exports = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return V8_VERSION >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/internals/array-species-create.js":
 /*!****************************************************************!*\
   !*** ./node_modules/core-js/internals/array-species-create.js ***!
@@ -513,6 +543,29 @@ module.exports = function (target, source) {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/internals/create-html.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/core-js/internals/create-html.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var requireObjectCoercible = __webpack_require__(/*! ../internals/require-object-coercible */ "./node_modules/core-js/internals/require-object-coercible.js");
+
+var quot = /"/g;
+
+// B.2.3.2.1 CreateHTML(string, tag, attribute, value)
+// https://tc39.github.io/ecma262/#sec-createhtml
+module.exports = function (string, tag, attribute, value) {
+  var S = String(requireObjectCoercible(string));
+  var p1 = '<' + tag;
+  if (attribute !== '') p1 += ' ' + attribute + '="' + String(value).replace(quot, '&quot;') + '"';
+  return p1 + '>' + S + '</' + tag + '>';
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/internals/create-non-enumerable-property.js":
 /*!**************************************************************************!*\
   !*** ./node_modules/core-js/internals/create-non-enumerable-property.js ***!
@@ -548,6 +601,28 @@ module.exports = function (bitmap, value) {
     writable: !(bitmap & 4),
     value: value
   };
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/internals/create-property.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/core-js/internals/create-property.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var toPrimitive = __webpack_require__(/*! ../internals/to-primitive */ "./node_modules/core-js/internals/to-primitive.js");
+var definePropertyModule = __webpack_require__(/*! ../internals/object-define-property */ "./node_modules/core-js/internals/object-define-property.js");
+var createPropertyDescriptor = __webpack_require__(/*! ../internals/create-property-descriptor */ "./node_modules/core-js/internals/create-property-descriptor.js");
+
+module.exports = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) definePropertyModule.f(object, propertyKey, createPropertyDescriptor(0, value));
+  else object[propertyKey] = value;
 };
 
 
@@ -848,6 +923,27 @@ module.exports = function (KEY, length, exec, sham) {
     );
     if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
   }
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/internals/forced-string-html-method.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/core-js/internals/forced-string-html-method.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+
+// check the existence of a method, lowercase
+// of a tag and escaping quotes in arguments
+module.exports = function (METHOD_NAME) {
+  return fails(function () {
+    var test = ''[METHOD_NAME]('"');
+    return test !== test.toLowerCase() || test.split('"').length > 3;
+  });
 };
 
 
@@ -2516,6 +2612,78 @@ module.exports = function (name) {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/es.array.concat.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.array.concat.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var isArray = __webpack_require__(/*! ../internals/is-array */ "./node_modules/core-js/internals/is-array.js");
+var isObject = __webpack_require__(/*! ../internals/is-object */ "./node_modules/core-js/internals/is-object.js");
+var toObject = __webpack_require__(/*! ../internals/to-object */ "./node_modules/core-js/internals/to-object.js");
+var toLength = __webpack_require__(/*! ../internals/to-length */ "./node_modules/core-js/internals/to-length.js");
+var createProperty = __webpack_require__(/*! ../internals/create-property */ "./node_modules/core-js/internals/create-property.js");
+var arraySpeciesCreate = __webpack_require__(/*! ../internals/array-species-create */ "./node_modules/core-js/internals/array-species-create.js");
+var arrayMethodHasSpeciesSupport = __webpack_require__(/*! ../internals/array-method-has-species-support */ "./node_modules/core-js/internals/array-method-has-species-support.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+var V8_VERSION = __webpack_require__(/*! ../internals/v8-version */ "./node_modules/core-js/internals/v8-version.js");
+
+var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+// We can't use this feature detection in V8 since it causes
+// deoptimization and serious performance degradation
+// https://github.com/zloirock/core-js/issues/679
+var IS_CONCAT_SPREADABLE_SUPPORT = V8_VERSION >= 51 || !fails(function () {
+  var array = [];
+  array[IS_CONCAT_SPREADABLE] = false;
+  return array.concat()[0] !== array;
+});
+
+var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+var isConcatSpreadable = function (O) {
+  if (!isObject(O)) return false;
+  var spreadable = O[IS_CONCAT_SPREADABLE];
+  return spreadable !== undefined ? !!spreadable : isArray(O);
+};
+
+var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+// `Array.prototype.concat` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.concat
+// with adding support of @@isConcatSpreadable and @@species
+$({ target: 'Array', proto: true, forced: FORCED }, {
+  concat: function concat(arg) { // eslint-disable-line no-unused-vars
+    var O = toObject(this);
+    var A = arraySpeciesCreate(O, 0);
+    var n = 0;
+    var i, k, length, len, E;
+    for (i = -1, length = arguments.length; i < length; i++) {
+      E = i === -1 ? O : arguments[i];
+      if (isConcatSpreadable(E)) {
+        len = toLength(E.length);
+        if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+      } else {
+        if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        createProperty(A, n++, E);
+      }
+    }
+    A.length = n;
+    return A;
+  }
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/es.function.name.js":
 /*!**********************************************************!*\
   !*** ./node_modules/core-js/modules/es.function.name.js ***!
@@ -3002,6 +3170,30 @@ $({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
     });
     if (result.error) reject(result.value);
     return capability.promise;
+  }
+});
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/modules/es.string.link.js":
+/*!********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.string.link.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var createHTML = __webpack_require__(/*! ../internals/create-html */ "./node_modules/core-js/internals/create-html.js");
+var forcedStringHTMLMethod = __webpack_require__(/*! ../internals/forced-string-html-method */ "./node_modules/core-js/internals/forced-string-html-method.js");
+
+// `String.prototype.link` method
+// https://tc39.github.io/ecma262/#sec-string.prototype.link
+$({ target: 'String', proto: true, forced: forcedStringHTMLMethod('link') }, {
+  link: function link(url) {
+    return createHTML(this, 'a', 'href', url);
   }
 });
 
@@ -4174,7 +4366,7 @@ window.addEventListener('DOMContentLoaded', function () {
   Object(_modules_mask__WEBPACK_IMPORTED_MODULE_3__["default"])('[name="phone"]');
   Object(_modules_checkTextInputs__WEBPACK_IMPORTED_MODULE_4__["default"])('[name="name"]');
   Object(_modules_checkTextInputs__WEBPACK_IMPORTED_MODULE_4__["default"])('[name="message"]');
-  Object(_modules_showMoreStyles__WEBPACK_IMPORTED_MODULE_5__["default"])('.button-styles', '.styles-2');
+  Object(_modules_showMoreStyles__WEBPACK_IMPORTED_MODULE_5__["default"])('.button-styles', '#styles .row');
 });
 
 /***/ }),
@@ -4236,27 +4428,108 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
 /* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
-/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var _services_requests__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../services/requests */ "./src/js/services/requests.js");
 
 
 
 
 
 
+// import {postData} from '../services/requests';
+// const forms = () => {
+//     const form = document.querySelectorAll('form');
+//     const inputs = document.querySelectorAll('input');
+//     const windows = document.querySelectorAll('[data-modal]');
+//     const upload = document.querySelectorAll('[name="upload"]');
+//     const message = {
+//         loading: 'Загрузка...',
+//         spinner: 'assets/img/spinner.gif',
+//         success: 'Ожидайте звонка',
+//         ok: 'assets/img/ok.png',
+//         failure: 'Что-то пошло не так...',
+//         fail: 'assets/img/fail.png'
+//     };
+//     const path = {
+//         designer: 'assets/server.php',
+//         question: 'assets/question.php'
+//     };
+//     const clearInputs = () => {
+//         inputs.forEach(item => {
+//             item.value = '';
+//         });
+//         upload.forEach(item => {
+//             item.previousElementSibling.textContent = 'Файл не выбран';
+//         });
+//     };
+//     upload.forEach(item => {
+//         item.addEventListener('input', () => {
+//             console.log(item.files[0]);
+//             let dots;
+//             const arr = item.files[0].name.split('.');
+//             arr[0].length > 5 ? dots = '...' : dots = '.';
+//             const name = arr[0].substring(0, 6) + dots + arr[1];
+//             item.previousElementSibling.textContent = name;
+//         });
+//     });
+//     form.forEach(item => {
+//         item.addEventListener('submit', (e) => {
+//             e.preventDefault();
+//             let statusMessage = document.createElement('div');
+//             statusMessage.classList.add('status');
+//             item.parentNode.appendChild(statusMessage);
+//             item.classList.add('animated', 'fadeOutUp');
+//             setTimeout(() => {
+//                 item.style.display = 'none';
+//             }, 400);
+//             let statusImg = document.createElement('img');
+//             statusImg.setAttribute('src', message.spinner);
+//             statusImg.classList.add('animated', 'fadeInUp');
+//             statusMessage.appendChild(statusImg);
+//             let textMessage = document.createElement('div');
+//             textMessage.textContent = message.loading;
+//             statusMessage.appendChild(textMessage);
+//             const formData = new FormData(item);
+//             let api;
+//             item.closest('.popup-design') || item.classList.contains('calc_form') ? api = path.designer : api = path.question;
+//             console.log(api);
+//             postData(api, formData)
+//                 .then(result => {
+//                     console.log(result);
+//                     statusImg.setAttribute('src', message.ok);
+//                     textMessage.textContent = message.success;
+//                 })
+//                 .catch(() => {
+//                     statusImg.setAttribute('src', message.fail);
+//                     textMessage.textContent = message.failure;
+//                 })
+//                 .finally(() => {
+//                     clearInputs();
+//                     setTimeout(() => {
+//                         statusMessage.remove();
+//                         item.style.display = 'block';
+//                         item.classList.remove('fadeOutUp');
+//                         item.classList.add('fadeInUp');
+//                         windows.forEach(item => {
+//                             item.style.display = 'none';
+//                         });
+//                     }, 5000);
+//                 });
+//         });
+//     });
+// };
+// export default forms;
 
 
 var forms = function forms() {
-  var form = document.querySelectorAll('form');
-  var inputs = document.querySelectorAll('input');
-  var windows = document.querySelectorAll('[data-modal]');
-  var upload = document.querySelectorAll('[name="upload"]');
+  var form = document.querySelectorAll('form'),
+      inputs = document.querySelectorAll('input'),
+      upload = document.querySelectorAll('[name="upload"]');
   var message = {
     loading: 'Загрузка...',
-    spinner: 'assets/img/spinner.gif',
-    success: 'Ожидайте звонка',
-    ok: 'assets/img/ok.png',
+    success: 'Спасибо! Скоро мы с вами свяжемся',
     failure: 'Что-то пошло не так...',
+    spinner: 'assets/img/spinner.gif',
+    ok: 'assets/img/ok.png',
     fail: 'assets/img/fail.png'
   };
   var path = {
@@ -4264,40 +4537,12 @@ var forms = function forms() {
     question: 'assets/question.php'
   };
 
-  var postData = function postData(url, data) {
-    var result;
-    return regeneratorRuntime.async(function postData$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            _context.next = 2;
-            return regeneratorRuntime.awrap(fetch(url, {
-              method: 'POST',
-              body: data
-            }));
-
-          case 2:
-            result = _context.sent;
-            _context.next = 5;
-            return regeneratorRuntime.awrap(result.text());
-
-          case 5:
-            return _context.abrupt("return", _context.sent);
-
-          case 6:
-          case "end":
-            return _context.stop();
-        }
-      }
-    });
-  };
-
   var clearInputs = function clearInputs() {
     inputs.forEach(function (item) {
       item.value = '';
     });
     upload.forEach(function (item) {
-      item.previousElementSibling.textContent = 'Файл не выбран';
+      item.previousElementSibling.textContent = "Файл не выбран";
     });
   };
 
@@ -4306,7 +4551,7 @@ var forms = function forms() {
       console.log(item.files[0]);
       var dots;
       var arr = item.files[0].name.split('.');
-      arr[0].length > 5 ? dots = '...' : dots = '.';
+      arr[0].length > 6 ? dots = "..." : dots = '.';
       var name = arr[0].substring(0, 6) + dots + arr[1];
       item.previousElementSibling.textContent = name;
     });
@@ -4332,8 +4577,8 @@ var forms = function forms() {
       var api;
       item.closest('.popup-design') || item.classList.contains('calc_form') ? api = path.designer : api = path.question;
       console.log(api);
-      postData(api, formData).then(function (result) {
-        console.log(result);
+      Object(_services_requests__WEBPACK_IMPORTED_MODULE_6__["postData"])(api, formData).then(function (res) {
+        console.log(res);
         statusImg.setAttribute('src', message.ok);
         textMessage.textContent = message.success;
       }).catch(function () {
@@ -4346,9 +4591,6 @@ var forms = function forms() {
           item.style.display = 'block';
           item.classList.remove('fadeOutUp');
           item.classList.add('fadeInUp');
-          windows.forEach(function (item) {
-            item.style.display = 'none';
-          });
         }, 5000);
       });
     });
@@ -4554,23 +4796,50 @@ var modals = function modals() {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.concat */ "./node_modules/core-js/modules/es.array.concat.js");
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_string_link__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/es.string.link */ "./node_modules/core-js/modules/es.string.link.js");
+/* harmony import */ var core_js_modules_es_string_link__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_link__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _services_requests__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../services/requests */ "./src/js/services/requests.js");
 
 
-var showMoreStyles = function showMoreStyles(trigger, styles) {
-  var btn = document.querySelector(trigger);
-  var cards = document.querySelectorAll(styles);
-  cards.forEach(function (card) {
-    card.classList.add('animated', 'fadeInUp');
-  });
+
+
+
+var showMoreStyles = function showMoreStyles(trigger, wrapper) {
+  var btn = document.querySelector(trigger); // cards.forEach(card => {
+  //     card.classList.add('animated', 'fadeInUp');
+  // });
+  // btn.addEventListener('click', () => {
+  //     cards.forEach(card => {
+  //         card.classList.remove('hidden-lg', 'hidden-md', 'hidden-sm', 'hidden-xs');
+  //         card.classList.add('col-sm-3', 'col-sm-offset-0', 'col-xs-10', 'col-xs-offset-1');
+  //     });
+  //     btn.remove();
+  // });
+
   btn.addEventListener('click', function () {
-    cards.forEach(function (card) {
-      card.classList.remove('hidden-lg', 'hidden-md', 'hidden-sm', 'hidden-xs');
-      card.classList.add('col-sm-3', 'col-sm-offset-0', 'col-xs-10', 'col-xs-offset-1');
+    Object(_services_requests__WEBPACK_IMPORTED_MODULE_3__["getResource"])('assets/db.json').then(function (res) {
+      return createCards(res.styles);
+    }).catch(function (error) {
+      throw new Error(error);
     });
     btn.remove();
   });
+
+  function createCards(response) {
+    response.forEach(function (_ref) {
+      var src = _ref.src,
+          title = _ref.title,
+          link = _ref.link;
+      var card = document.createElement('div');
+      card.classList.add('animated', 'fadeInUp', 'col-sm-3', 'col-sm-offset-0', 'col-xs-10', 'col-xs-offset-1');
+      card.innerHTML = "\n                <div class=\"styles-block\">\n                    <img src=".concat(src, " alt=\"style\">\n                    <h4>").concat(title, "</h4>\n                    <a href=").concat(link, ">\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435</a>\n                </div>\n            ");
+      document.querySelector(wrapper).appendChild(card);
+    });
+  }
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (showMoreStyles);
@@ -4657,6 +4926,96 @@ var sliders = function sliders(slides, dir, prev, next) {
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (sliders);
+
+/***/ }),
+
+/***/ "./src/js/services/requests.js":
+/*!*************************************!*\
+  !*** ./src/js/services/requests.js ***!
+  \*************************************/
+/*! exports provided: postData, getResource */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "postData", function() { return postData; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getResource", function() { return getResource; });
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.concat */ "./node_modules/core-js/modules/es.array.concat.js");
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/es.object.to-string */ "./node_modules/core-js/modules/es.object.to-string.js");
+/* harmony import */ var core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/es.promise */ "./node_modules/core-js/modules/es.promise.js");
+/* harmony import */ var core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
+/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3__);
+
+
+
+
+
+var postData = function postData(url, data) {
+  var res;
+  return regeneratorRuntime.async(function postData$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          _context.next = 2;
+          return regeneratorRuntime.awrap(fetch(url, {
+            method: "POST",
+            body: data
+          }));
+
+        case 2:
+          res = _context.sent;
+          _context.next = 5;
+          return regeneratorRuntime.awrap(res.text());
+
+        case 5:
+          return _context.abrupt("return", _context.sent);
+
+        case 6:
+        case "end":
+          return _context.stop();
+      }
+    }
+  });
+};
+
+var getResource = function getResource(url) {
+  var res;
+  return regeneratorRuntime.async(function getResource$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          _context2.next = 2;
+          return regeneratorRuntime.awrap(fetch(url));
+
+        case 2:
+          res = _context2.sent;
+
+          if (res.ok) {
+            _context2.next = 5;
+            break;
+          }
+
+          throw new Error("Could not fetch ".concat(url, ", status: ").concat(res.status));
+
+        case 5:
+          _context2.next = 7;
+          return regeneratorRuntime.awrap(res.json());
+
+        case 7:
+          return _context2.abrupt("return", _context2.sent);
+
+        case 8:
+        case "end":
+          return _context2.stop();
+      }
+    }
+  });
+};
+
+
 
 /***/ })
 
