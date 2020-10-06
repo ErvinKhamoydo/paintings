@@ -23,5 +23,6 @@ window.addEventListener('DOMContentLoaded', () => {
     calc('#size', '#material', '#options', '.promocode', '.calc-price');
     filter('.portfolio-menu', '.portfolio-wrapper', '.portfolio-no');
     pictureSize('.sizes-block');
-    accordion('.accordion-heading', '.accordion-block');
+    // accordion('.accordion-heading', '.accordion-block');
+    accordion('.accordion-heading');
 });
